@@ -7,18 +7,19 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Selfie Liveness Detection</Text>
-      <Text style={styles.subtitle}>Secure identity verification</Text>
+      <Text style={styles.subtitle}>With Face Detection</Text>
 
       <View style={styles.featuresContainer}>
         <Text style={styles.feature}>✓ Real-time face detection</Text>
         <Text style={styles.feature}>✓ Liveness verification</Text>
+        <Text style={styles.feature}>✓ Haptic feedback</Text>
       </View>
 
       <TouchableOpacity
         style={styles.startButton}
         onPress={() => router.push("/selfie")}
       >
-        <Text style={styles.buttonText}>Get Started</Text>
+        <Text style={styles.buttonText}>Start Detection</Text>
       </TouchableOpacity>
     </View>
   );

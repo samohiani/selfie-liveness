@@ -1,64 +1,54 @@
-# Selfie Liveness Detection Demo
+# Liveness Detection App
 
-A React Native Expo app that demonstrates liveness detection for selfie capture. This demo works in Expo Go and simulates real liveness detection through user interaction challenges.
+A simple React Native app that demonstrates face detection and liveness verification.
 
 ## Features
 
-- **Camera Integration**: Uses expo-camera for selfie capture
-- **Liveness Verification**: Simulated liveness detection with interactive challenges
-- **Challenge Sequence**: Random sequence of 3 challenges (blink, smile, look left/right)
-- **State Management**: Proper state handling for multi-step verification
-- **Temporary Storage**: Captured images stored with temporary URLs
-- **Expo Go Compatible**: Works without requiring native builds
+- Real-time face detection
+- Liveness verification through 3 challenges
+- Selfie capture with verification
+- Haptic feedback
+
+## How to Run
+
+1. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+2. Prebuild the project:
+
+   ```bash
+   npx expo prebuild
+   ```
+
+3. Run on iOS:
+
+   ```bash
+   npx expo run:ios
+   ```
+
+4. Run on Android:
+   ```bash
+   npx expo run:android
+   ```
 
 ## How It Works
 
-1. **Start Check**: Tap "Start Check" to begin the liveness verification process
-2. **Face Detection**: The app simulates face detection
-3. **Challenge Sequence**: Complete 3 random challenges:
-   - Blink your eyes
-   - Smile
-   - Look left or right
-4. **User Interaction**: Tap the corresponding action buttons when prompted
-5. **Verification**: After completing all challenges, you can capture a selfie
-6. **Storage**: The captured image is stored with a temporary URL
+1. Open the app and tap "Start Detection"
+2. Position your face within the circle
+3. Wait for face detection (green box appears)
+4. Tap "Start Liveness Check"
+5. Complete the 3 challenges:
+   - Tap "Blink" when prompted
+   - Tap "Smile" when prompted
+   - Tap "Look Left" when prompted
+6. After verification, tap "Capture Selfie"
+7. View your captured image with confirmation
 
-## Challenges
+## Requirements
 
-- **Blink Detection**: Tap the "Blink" button when prompted
-- **Smile Detection**: Tap the "Smile" button when prompted
-- **Gaze Detection**: Tap either "Left" or "Right" button when prompted
-
-## Technical Implementation
-
-The app simulates liveness detection through user interaction rather than actual AI/ML face detection. This approach:
-
-- Works in Expo Go without native modules
-- Demonstrates the user experience of real liveness detection
-- Provides visual feedback for each step
-- Stores captured images to the device's document directory
-
-## Dependencies
-
-- expo-camera: For camera functionality
-- expo-file-system: For storing captured images
-- expo-router: For navigation
-
-## Running the App
-
-```bash
-# Install dependencies
-npm install
-
-# Start in Expo Go
-npx expo start
-```
-
-## Development vs Production
-
-This is a demo implementation that simulates liveness detection. For production use, you would need:
-
-- Actual face detection using computer vision libraries
-- Real-time blink/smile/gaze detection
-- Server-side verification of liveness
-- Proper security measures to prevent spoofing
+- Node.js (version 16 or higher)
+- Xcode (for iOS development)
+- Android Studio (for Android development)

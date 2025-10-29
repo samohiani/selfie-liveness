@@ -1,4 +1,3 @@
-import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -12,27 +11,65 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import {
+  Camera,
+  useCameraDevice,
+  useCameraPermission,
+  useFrameProcessor,
+} from "react-native-vision-camera";
+import { scanFaces } from "vision-camera-face-detector";
 
 // Get screen dimensions for responsive design
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const isTablet = SCREEN_WIDTH >= 768;
 
-// Define challenge types
-type ChallengeType = "none" | "blink" | "smile" | "lookLeft" | "lookRight";
+// Define Face type
+type Face = {
+  bounds: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  leftEyeOpenProbability: number;
+  rightEyeOpenProbability: number;
+  smilingProbability: number;
+  yawAngle: number;
+};
+
+// Liveness detection thresholds
+const EYE_CLOSED_THRESHOLD = 0.4;
+const SMILE_THRESHOLD = 0.7;
+const HEAD_TURN_THRESHOLD = 15; // degrees
+
+// Challenge types for automatic detection
+type ChallengeType = "none" | "blink" | "smile" | "turnHead";
 
 // Challenge sequence
-const CHALLENGE_SEQUENCE: ChallengeType[] = ["blink", "smile", "lookLeft"];
+const CHALLENGE_SEQUENCE: ChallengeType[] = ["blink", "smile", "turnHead"];
 
-export default function SelfieScreen() {
-  const [facing] = useState<CameraType>("front");
-  const [permission, requestPermission] = useCameraPermissions();
+export default function SelfieVisionScreen() {
+  const device = useCameraDevice("front");
+  const { hasPermission, requestPermission } = useCameraPermission();
+  const cameraRef = useRef<Camera>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isLivenessVerified, setIsLivenessVerified] = useState(false);
   const [currentChallengeIndex, setCurrentChallengeIndex] = useState(0);
   const [challengeCompleted, setChallengeCompleted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [detectionStatus, setDetectionStatus] = useState("Get ready...");
-  const cameraRef = useRef<any>(null);
+  const [detectionStatus, setDetectionStatus] = useState(
+    "Position your face in the circle"
+  );
+  const [faceDetected, setFaceDetected] = useState(false);
+  const [faces, setFaces] = useState<Face[]>([]);
+
+  // Liveness detection state
+  const [blinkDetected, setBlinkDetected] = useState(false);
+  const [smileDetected, setSmileDetected] = useState(false);
+  const [headTurnDetected, setHeadTurnDetected] = useState(false);
+  const [initialHeadPosition, setInitialHeadPosition] = useState<number | null>(
+    null
+  );
 
   // Get current challenge
   const currentChallenge =
@@ -40,12 +77,153 @@ export default function SelfieScreen() {
       ? CHALLENGE_SEQUENCE[currentChallengeIndex]
       : "none";
 
+  // Frame processor for face detection
+  const frameProcessor = useFrameProcessor((frame) => {
+    "worklet";
+    try {
+      const detectedFaces = scanFaces(frame);
+      // @ts-ignore
+      setFaces(detectedFaces);
+    } catch (error) {
+      console.log("Face detection error:", error);
+    }
+  }, []);
+
+  // Automatic liveness detection
+  useEffect(() => {
+    if (faces.length > 0 && currentChallenge !== "none") {
+      const face = faces[0];
+
+      // Initialize head position on first detection
+      if (initialHeadPosition === null) {
+        setInitialHeadPosition(face.yawAngle);
+      }
+
+      // Detect blink (both eyes closed)
+      if (currentChallenge === "blink" && !blinkDetected) {
+        if (
+          face.leftEyeOpenProbability < EYE_CLOSED_THRESHOLD &&
+          face.rightEyeOpenProbability < EYE_CLOSED_THRESHOLD
+        ) {
+          setBlinkDetected(true);
+          setChallengeCompleted(true);
+          setDetectionStatus("Blink detected!");
+
+          // Move to next challenge automatically
+          setTimeout(() => {
+            moveToNextChallenge();
+          }, 1500);
+        }
+      }
+
+      // Detect smile
+      if (currentChallenge === "smile" && !smileDetected) {
+        if (face.smilingProbability > SMILE_THRESHOLD) {
+          setSmileDetected(true);
+          setChallengeCompleted(true);
+          setDetectionStatus("Smile detected!");
+
+          // Move to next challenge automatically
+          setTimeout(() => {
+            moveToNextChallenge();
+          }, 1500);
+        }
+      }
+
+      // Detect head turn
+      if (
+        currentChallenge === "turnHead" &&
+        initialHeadPosition !== null &&
+        !headTurnDetected
+      ) {
+        const headMovement = Math.abs(face.yawAngle - initialHeadPosition);
+        if (headMovement > HEAD_TURN_THRESHOLD) {
+          setHeadTurnDetected(true);
+          setChallengeCompleted(true);
+          setDetectionStatus("Head turn detected!");
+
+          // Complete all challenges
+          setTimeout(() => {
+            setIsLivenessVerified(true);
+            setDetectionStatus("Liveness verified! Take a selfie.");
+            if (Platform.OS !== "web") {
+              Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Success
+              );
+            }
+          }, 1500);
+        }
+      }
+    }
+  }, [
+    faces,
+    currentChallenge,
+    blinkDetected,
+    smileDetected,
+    headTurnDetected,
+    initialHeadPosition,
+  ]);
+
+  // Update face detection status based on detected faces
+  useEffect(() => {
+    if (faces.length > 0) {
+      setFaceDetected(true);
+      const face = faces[0];
+
+      // Check if face is centered
+      const faceCenterX = face.bounds.x + face.bounds.width / 2;
+      const faceCenterY = face.bounds.y + face.bounds.height / 2;
+      const screenCenterX = SCREEN_WIDTH / 2;
+      const screenCenterY = SCREEN_HEIGHT / 2;
+
+      const isCenteredHorizontally =
+        Math.abs(faceCenterX - screenCenterX) < SCREEN_WIDTH * 0.2;
+      const isCenteredVertically =
+        Math.abs(faceCenterY - screenCenterY) < SCREEN_HEIGHT * 0.2;
+
+      if (isCenteredHorizontally && isCenteredVertically) {
+        if (detectionStatus === "Position your face in the circle") {
+          setDetectionStatus("Face detected! Get ready...");
+        }
+      } else {
+        setDetectionStatus("Center your face in the circle");
+      }
+    } else {
+      setFaceDetected(false);
+      if (currentChallenge === "none") {
+        setDetectionStatus("Position your face in the circle");
+      }
+    }
+  }, [faces, currentChallenge]);
+
   // Trigger haptic feedback on challenge completion
   useEffect(() => {
     if (challengeCompleted && Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
   }, [challengeCompleted]);
+
+  // Function to move to the next challenge
+  const moveToNextChallenge = () => {
+    if (currentChallengeIndex < CHALLENGE_SEQUENCE.length - 1) {
+      // Move to next challenge
+      const nextIndex = currentChallengeIndex + 1;
+      setCurrentChallengeIndex(nextIndex);
+      setChallengeCompleted(false);
+      setDetectionStatus(
+        getChallengeInstruction(CHALLENGE_SEQUENCE[nextIndex])
+      );
+
+      // Reset challenge-specific states
+      if (CHALLENGE_SEQUENCE[nextIndex] === "smile") {
+        setBlinkDetected(false);
+      } else if (CHALLENGE_SEQUENCE[nextIndex] === "turnHead") {
+        setSmileDetected(false);
+        // Reset head position tracking for turn head challenge
+        setInitialHeadPosition(null);
+      }
+    }
+  };
 
   // Start the liveness challenge
   const startLivenessCheck = () => {
@@ -71,18 +249,16 @@ export default function SelfieScreen() {
         return "Blink your eyes";
       case "smile":
         return "Please smile now";
-      case "lookLeft":
-        return "Look to your left";
-      case "lookRight":
-        return "Look to your right";
+      case "turnHead":
+        return "Look to your left and right";
       default:
-        return "Get ready...";
+        return "Position your face in the circle";
     }
   };
 
   // Complete the current challenge
   const completeChallenge = () => {
-    if (!challengeCompleted) {
+    if (!challengeCompleted && faceDetected) {
       setChallengeCompleted(true);
       setDetectionStatus("Challenge completed!");
 
@@ -108,9 +284,9 @@ export default function SelfieScreen() {
     }
   };
 
-  // Simulate user action for each challenge
+  // Simulate user action for each challenge (in a real app, this would be replaced with actual detection)
   const simulateChallengeAction = () => {
-    if (!challengeCompleted) {
+    if (!challengeCompleted && faceDetected) {
       if (Platform.OS !== "web") {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
@@ -118,6 +294,7 @@ export default function SelfieScreen() {
     }
   };
 
+  // Reset liveness check
   const resetLivenessCheck = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -128,7 +305,15 @@ export default function SelfieScreen() {
     setCurrentChallengeIndex(0);
     setChallengeCompleted(false);
     setIsProcessing(false);
-    setDetectionStatus("Get ready...");
+    setDetectionStatus("Position your face in the circle");
+    setFaceDetected(false);
+    setFaces([]);
+
+    // Reset liveness detection states
+    setBlinkDetected(false);
+    setSmileDetected(false);
+    setHeadTurnDetected(false);
+    setInitialHeadPosition(null);
   };
 
   async function takePicture() {
@@ -139,14 +324,13 @@ export default function SelfieScreen() {
         }
 
         setIsProcessing(true);
-        const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.8,
-          base64: false,
-          mirror: true, // Mirror the image to match selfie expectations
+        const photo = await cameraRef.current.takePhoto({
+          flash: "off",
+          enableShutterSound: false,
         });
 
-        // Store image URI directly (no file system operations)
-        setCapturedImage(photo.uri);
+        // Store image URI
+        setCapturedImage(`file://${photo.path}`);
         setIsProcessing(false);
         Alert.alert("Success", "Selfie captured with liveness verification!");
       } catch (error) {
@@ -172,15 +356,7 @@ export default function SelfieScreen() {
   }
 
   // Handle permission states
-  if (!permission) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.message}>Loading camera...</Text>
-      </View>
-    );
-  }
-
-  if (!permission.granted) {
+  if (!hasPermission) {
     return (
       <View style={styles.container}>
         <View style={styles.permissionContainer}>
@@ -194,6 +370,14 @@ export default function SelfieScreen() {
             <Text style={styles.buttonText}>Grant Permission</Text>
           </TouchableOpacity>
         </View>
+      </View>
+    );
+  }
+
+  if (device == null) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.message}>Camera not available</Text>
       </View>
     );
   }
@@ -227,38 +411,78 @@ export default function SelfieScreen() {
             Challenge {currentChallengeIndex + 1} of {CHALLENGE_SEQUENCE.length}
           </Text>
         )}
+        {/* Face detection indicator */}
+        <View style={styles.indicatorContainer}>
+          <View
+            style={[
+              styles.indicator,
+              faceDetected ? styles.indicatorActive : styles.indicatorInactive,
+            ]}
+          />
+          <Text style={styles.indicatorText}>
+            {faceDetected ? "Face Detected" : "No Face Detected"}
+          </Text>
+        </View>
       </View>
 
-      <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
+      <Camera
+        ref={cameraRef}
+        style={styles.camera}
+        device={device}
+        isActive={true}
+        frameProcessor={frameProcessor}
+        photo={true}
+      >
         <View style={styles.cameraOverlay}>
-          <View style={styles.faceOutline} />
+          {/* Face detection visualization */}
+          {faces.map((face, index) => (
+            <View
+              key={index}
+              style={[
+                styles.faceOutline,
+                {
+                  position: "absolute",
+                  left: face.bounds.x,
+                  top: face.bounds.y,
+                  width: face.bounds.width,
+                  height: face.bounds.height,
+                  borderColor: "#00FF00",
+                },
+              ]}
+            />
+          ))}
+
+          {/* Center guide circle */}
+          <View style={styles.centerGuide} />
         </View>
-      </CameraView>
+      </Camera>
 
       <View style={styles.controlsContainer}>
         {currentChallenge === "none" ? (
           <TouchableOpacity
-            style={styles.startButton}
+            style={[styles.startButton, !faceDetected && styles.disabledButton]}
             onPress={startLivenessCheck}
+            disabled={!faceDetected}
           >
-            <Text style={styles.buttonText}>Start Liveness Check</Text>
+            <Text style={styles.buttonText}>
+              {!faceDetected ? "Face Not Detected" : "Start Liveness Check"}
+            </Text>
           </TouchableOpacity>
         ) : (
           <View style={styles.challengeContainer}>
-            <TouchableOpacity
-              style={[
-                styles.challengeButton,
-                challengeCompleted && styles.disabledButton,
-              ]}
-              onPress={simulateChallengeAction}
-              disabled={challengeCompleted}
-            >
+            <View style={styles.challengeButton}>
               <Text style={styles.buttonText}>
-                {challengeCompleted
-                  ? "Completed"
-                  : getCurrentChallengeLabel(currentChallengeIndex)}
+                {getCurrentChallengeLabel(currentChallengeIndex)}
               </Text>
-            </TouchableOpacity>
+              <Text
+                style={[
+                  styles.buttonText,
+                  { fontSize: isTablet ? 14 : 12, marginTop: 5 },
+                ]}
+              >
+                Automatic Detection
+              </Text>
+            </View>
           </View>
         )}
 
@@ -266,10 +490,11 @@ export default function SelfieScreen() {
           <TouchableOpacity
             style={[
               styles.captureButton,
-              (isProcessing || !isLivenessVerified) && styles.disabledButton,
+              (isProcessing || !isLivenessVerified || !faceDetected) &&
+                styles.disabledButton,
             ]}
             onPress={takePicture}
-            disabled={isProcessing || !isLivenessVerified}
+            disabled={isProcessing || !isLivenessVerified || !faceDetected}
           >
             <Text style={styles.buttonText}>
               {isProcessing ? "Processing..." : "Capture Selfie"}
@@ -297,10 +522,8 @@ function getCurrentChallengeLabel(currentChallengeIndex: number): string {
       return "Blink";
     case "smile":
       return "Smile";
-    case "lookLeft":
-      return "Look Left";
-    case "lookRight":
-      return "Look Right";
+    case "turnHead":
+      return "Turn Head";
     default:
       return "Complete Challenge";
   }
@@ -361,12 +584,33 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 5,
   },
+  indicatorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 10,
+  },
+  indicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  indicatorActive: {
+    backgroundColor: "#4CAF50",
+  },
+  indicatorInactive: {
+    backgroundColor: "#ff5252",
+  },
+  indicatorText: {
+    fontSize: isTablet ? 16 : 14,
+    color: "#666",
+  },
   camera: {
     flex: 1,
     marginHorizontal: isTablet ? 40 : 20,
     borderRadius: 20,
     overflow: "hidden",
-    backgroundColor: "#000",
   },
   cameraOverlay: {
     flex: 1,
@@ -375,6 +619,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   faceOutline: {
+    borderWidth: 3,
+    borderStyle: "solid",
+    borderRadius: 10,
+  },
+  centerGuide: {
     width: isTablet ? 300 : 200,
     height: isTablet ? 300 : 200,
     borderRadius: isTablet ? 150 : 100,

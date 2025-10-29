@@ -4,7 +4,6 @@ import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 
 export default function RootLayout() {
-  // Always use light theme for simplicity
   return (
     <ThemeProvider value={DefaultTheme}>
       <Stack>
