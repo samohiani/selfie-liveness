@@ -21,22 +21,10 @@
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
-      "permissions": [
-        "CAMERA",
-        "android.permission.CAMERA",
-        "CAMERA",
-        "android.permission.CAMERA",
-        "CAMERA",
-        "android.permission.CAMERA",
-        "CAMERA",
-        "android.permission.CAMERA"
-      ],
+      "permissions": ["CAMERA", "android.permission.CAMERA"],
       "package": "com.anonymous.selfieliveness"
     },
-    "plugins": [
-      "expo-router",
-      "expo-splash-screen"
-    ],
+    "plugins": ["expo-router"],
     "extra": {
       "router": {},
       "eas": {

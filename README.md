@@ -1,13 +1,14 @@
 # Liveness Detection App
 
-A simple React Native app that demonstrates face detection and liveness verification.
+A React Native app that demonstrates automatic face detection and liveness verification.
 
 ## Features
 
-- Real-time face detection
-- Liveness verification through 3 challenges
+- Real-time face detection using MLKit Vision
+- Automatic liveness verification through 3 biometric challenges
 - Selfie capture with verification
 - Haptic feedback
+- Cross-platform support (iOS & Android)
 
 ## How to Run
 
@@ -40,11 +41,11 @@ A simple React Native app that demonstrates face detection and liveness verifica
 2. Position your face within the circle
 3. Wait for face detection (green box appears)
 4. Tap "Start Liveness Check"
-5. Complete the 3 challenges:
-   - Tap "Blink" when prompted
-   - Tap "Smile" when prompted
-   - Tap "Look Left" when prompted
-6. After verification, tap "Capture Selfie"
+5. Complete the 3 automatic challenges:
+   - Blink detection (system automatically detects when you close your eyes)
+   - Smile detection (system automatically detects when you smile)
+   - Head turn detection (system automatically detects when you turn your head)
+6. After automatic verification, tap "Capture Selfie"
 7. View your captured image with confirmation
 
 ## Requirements

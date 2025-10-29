@@ -55,7 +55,7 @@ export default function SelfieVisionScreen() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isLivenessVerified, setIsLivenessVerified] = useState(false);
   const [currentChallengeIndex, setCurrentChallengeIndex] = useState(0);
-  const [challengeCompleted, setChallengeCompleted] = useState(false);
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [detectionStatus, setDetectionStatus] = useState(
     "Position your face in the circle"
@@ -106,7 +106,6 @@ export default function SelfieVisionScreen() {
           face.rightEyeOpenProbability < EYE_CLOSED_THRESHOLD
         ) {
           setBlinkDetected(true);
-          setChallengeCompleted(true);
           setDetectionStatus("Blink detected!");
 
           // Move to next challenge automatically
@@ -120,7 +119,6 @@ export default function SelfieVisionScreen() {
       if (currentChallenge === "smile" && !smileDetected) {
         if (face.smilingProbability > SMILE_THRESHOLD) {
           setSmileDetected(true);
-          setChallengeCompleted(true);
           setDetectionStatus("Smile detected!");
 
           // Move to next challenge automatically
@@ -139,7 +137,6 @@ export default function SelfieVisionScreen() {
         const headMovement = Math.abs(face.yawAngle - initialHeadPosition);
         if (headMovement > HEAD_TURN_THRESHOLD) {
           setHeadTurnDetected(true);
-          setChallengeCompleted(true);
           setDetectionStatus("Head turn detected!");
 
           // Complete all challenges
@@ -198,10 +195,15 @@ export default function SelfieVisionScreen() {
 
   // Trigger haptic feedback on challenge completion
   useEffect(() => {
-    if (challengeCompleted && Platform.OS !== "web") {
+    const isAnyChallengeCompleted =
+      (currentChallenge === "blink" && blinkDetected) ||
+      (currentChallenge === "smile" && smileDetected) ||
+      (currentChallenge === "turnHead" && headTurnDetected);
+
+    if (isAnyChallengeCompleted && Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-  }, [challengeCompleted]);
+  }, [currentChallenge, blinkDetected, smileDetected, headTurnDetected]);
 
   // Function to move to the next challenge
   const moveToNextChallenge = () => {
@@ -209,7 +211,6 @@ export default function SelfieVisionScreen() {
       // Move to next challenge
       const nextIndex = currentChallengeIndex + 1;
       setCurrentChallengeIndex(nextIndex);
-      setChallengeCompleted(false);
       setDetectionStatus(
         getChallengeInstruction(CHALLENGE_SEQUENCE[nextIndex])
       );
@@ -258,40 +259,7 @@ export default function SelfieVisionScreen() {
 
   // Complete the current challenge
   const completeChallenge = () => {
-    if (!challengeCompleted && faceDetected) {
-      setChallengeCompleted(true);
-      setDetectionStatus("Challenge completed!");
-
-      // Move to next challenge or complete verification
-      setTimeout(() => {
-        if (currentChallengeIndex < CHALLENGE_SEQUENCE.length - 1) {
-          // Move to next challenge
-          const nextIndex = currentChallengeIndex + 1;
-          setCurrentChallengeIndex(nextIndex);
-          setChallengeCompleted(false);
-          setDetectionStatus(
-            getChallengeInstruction(CHALLENGE_SEQUENCE[nextIndex])
-          );
-        } else {
-          // All challenges completed
-          setIsLivenessVerified(true);
-          setDetectionStatus("Liveness verified! Take a selfie.");
-          if (Platform.OS !== "web") {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          }
-        }
-      }, 1500);
-    }
-  };
-
-  // Simulate user action for each challenge (in a real app, this would be replaced with actual detection)
-  const simulateChallengeAction = () => {
-    if (!challengeCompleted && faceDetected) {
-      if (Platform.OS !== "web") {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
-      completeChallenge();
-    }
+    // This function is no longer used in automatic detection mode
   };
 
   // Reset liveness check
@@ -303,7 +271,6 @@ export default function SelfieVisionScreen() {
     setCapturedImage(null);
     setIsLivenessVerified(false);
     setCurrentChallengeIndex(0);
-    setChallengeCompleted(false);
     setIsProcessing(false);
     setDetectionStatus("Position your face in the circle");
     setFaceDetected(false);
