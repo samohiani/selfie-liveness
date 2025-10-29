@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "selfie-liveness",
-    "slug": "selfie-liveness",
+    "slug": "ohiani-samuel",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -9,7 +9,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to take selfies for liveness detection.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to save captured selfies."
+      },
+      "bundleIdentifier": "com.anonymous.selfie-liveness"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,6 +23,18 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
@@ -27,6 +44,12 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera for liveness detection"
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -43,6 +66,19 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ddae124d-a4ef-451d-9a91-65cc27f2bb9b"
+      }
+    },
+    "owner": "dasaka",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/ddae124d-a4ef-451d-9a91-65cc27f2bb9b"
     }
   }
 }

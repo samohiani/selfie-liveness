@@ -1,50 +1,64 @@
-# Welcome to your Expo app 👋
+# Selfie Liveness Detection Demo
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native Expo app that demonstrates liveness detection for selfie capture. This demo works in Expo Go and simulates real liveness detection through user interaction challenges.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Camera Integration**: Uses expo-camera for selfie capture
+- **Liveness Verification**: Simulated liveness detection with interactive challenges
+- **Challenge Sequence**: Random sequence of 3 challenges (blink, smile, look left/right)
+- **State Management**: Proper state handling for multi-step verification
+- **Temporary Storage**: Captured images stored with temporary URLs
+- **Expo Go Compatible**: Works without requiring native builds
 
-   ```bash
-   npm install
-   ```
+## How It Works
 
-2. Start the app
+1. **Start Check**: Tap "Start Check" to begin the liveness verification process
+2. **Face Detection**: The app simulates face detection
+3. **Challenge Sequence**: Complete 3 random challenges:
+   - Blink your eyes
+   - Smile
+   - Look left or right
+4. **User Interaction**: Tap the corresponding action buttons when prompted
+5. **Verification**: After completing all challenges, you can capture a selfie
+6. **Storage**: The captured image is stored with a temporary URL
 
-   ```bash
-   npx expo start
-   ```
+## Challenges
 
-In the output, you'll find options to open the app in a
+- **Blink Detection**: Tap the "Blink" button when prompted
+- **Smile Detection**: Tap the "Smile" button when prompted
+- **Gaze Detection**: Tap either "Left" or "Right" button when prompted
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Technical Implementation
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+The app simulates liveness detection through user interaction rather than actual AI/ML face detection. This approach:
 
-## Get a fresh project
+- Works in Expo Go without native modules
+- Demonstrates the user experience of real liveness detection
+- Provides visual feedback for each step
+- Stores captured images to the device's document directory
 
-When you're ready, run:
+## Dependencies
+
+- expo-camera: For camera functionality
+- expo-file-system: For storing captured images
+- expo-router: For navigation
+
+## Running the App
 
 ```bash
-npm run reset-project
+# Install dependencies
+npm install
+
+# Start in Expo Go
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Development vs Production
 
-## Learn more
+This is a demo implementation that simulates liveness detection. For production use, you would need:
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Actual face detection using computer vision libraries
+- Real-time blink/smile/gaze detection
+- Server-side verification of liveness
+- Proper security measures to prevent spoofing
