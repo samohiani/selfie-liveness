@@ -1,41 +1,4 @@
 {
-  "expo": {
-    "name": "selfie-liveness",
-    "slug": "selfie-liveness",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true,
-      "infoPlist": {
-        "NSCameraUsageDescription": "This app uses the camera to detect faces and verify liveness.",
-        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to save captured selfies.",
-        "ITSAppUsesNonExemptEncryption": false
-      },
-      "bundleIdentifier": "com.anonymous.selfie-liveness"
-    },
-    "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png"
-      },
-      "permissions": ["CAMERA", "android.permission.CAMERA"],
-      "package": "com.anonymous.selfieliveness"
-    },
-    "plugins": ["expo-router"],
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "d55e99de-799f-4f88-a5fc-754e25c25b2f"
-      }
-    },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/d55e99de-799f-4f88-a5fc-754e25c25b2f"
-    }
-  }
+  "name": "SelfieLiveness",
+  "displayName": "SelfieLiveness"
 }
